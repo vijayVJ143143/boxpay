@@ -9,22 +9,6 @@ dotenv.config()
 const app = express()
 const PORT = process.env.PORT || 3000
 
-// MongoDB connection setup
-const mongoUri = process.env.MONGO_URI  // Ensure this is set in your .env file
-const client = new MongoClient(mongoUri)
-let db
-
-async function connectDB() {
-  try {
-    await client.connect()
-    db = client.db('paymentDB')  // Replace with your actual database name
-    console.log('Connected to MongoDB')
-  } catch (err) {
-    console.error('Error connecting to MongoDB:', err)
-    process.exit(1)  // Exit the app if the DB connection fails
-  }
-}
-connectDB()
 
 // Middleware to parse incoming JSON
 app.use(express.json())
@@ -120,19 +104,11 @@ app.post('/api/store-payment-response', async (req, res) => {
 
     // Verify if the signature matches
     if (receivedSignature == calculatedSignature ) {
-        // Log the received signature and the calculated signature for debugging
-        console.log('Received Signature:', receivedSignature);
-        console.log('Calculated Signature:', calculatedSignature );
-        // Store paymentResponse in MongoDB
-        try {
-          const collection = db.collection('payments')  // Actual collection name
-          await collection.insertOne(paymentResponse)
-          console.log('Payment data stored in MongoDB:', paymentResponse)
-          return res.status(200).send('Payment data and signature verified and stored successfully')
-        } catch (err) {
-            console.error('Error storing payment data in MongoDB:', err)
-            return res.status(500).send('Error storing payment data');
-        }
+          // Log the received signature and the calculated signature for debugging
+          console.log('Received Signature:', receivedSignature);
+          console.log('Calculated Signature:', calculatedSignature );
+          console.log('Payment data ', paymentResponse)
+          return res.status(200).send('Payment data and signature verified')
     }
     else {
       return res.status(403).send('Invalid signature');
