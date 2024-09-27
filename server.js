@@ -16,11 +16,7 @@ let db
 
 async function connectDB() {
   try {
-    await client.connect({
-      useNewUrlParser: true,
-      useUnifiedTopology: true,
-      ssl: true
-    })
+    await client.connect()
     db = client.db('paymentDB')  // Replace with your actual database name
     console.log('Connected to MongoDB')
   } catch (err) {
@@ -56,9 +52,9 @@ app.post('/create-session', async (req, res) => {
         "shopper": {
             "uniqueReference": "UNIQUE_SHOPPER"
         },
-        "frontendReturnUrl": "https://ce91-2405-201-c00f-4a8a-87c-393a-875e-58db.ngrok-free.app/api/success",
-        "frontendBackUrl": "https://ce91-2405-201-c00f-4a8a-87c-393a-875e-58db.ngrok-free.app/api/failure",
-        "statusNotifyUrl": "https://ce91-2405-201-c00f-4a8a-87c-393a-875e-58db.ngrok-free.app/api/store-payment-response"
+        "frontendReturnUrl": "https://boxpay-3.onrender.com/api/success",
+        "frontendBackUrl": "https://boxpay-3.onrender.com/api/failure",
+        "statusNotifyUrl": "https://boxpay-3.onrender.com/api/store-payment-response"
     }
 
     try {
@@ -92,6 +88,8 @@ app.post('/api/store-payment-response', async (req, res) => {
     if (!paymentResponse || !paymentResponse.legalEntityCode || !paymentResponse.orderId) {
         return res.status(400).send('Invalid payment data received');
     }
+
+    console.log('Received paymentResponse:', paymentResponse);
 
     // Ensure the 'x-signature' header exists
     const receivedSignature = req.headers['x-signature'];
