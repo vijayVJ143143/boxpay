@@ -16,7 +16,11 @@ let db
 
 async function connectDB() {
   try {
-    await client.connect()
+    await client.connect({
+      useNewUrlParser: true,
+      useUnifiedTopology: true,
+      ssl: true
+    })
     db = client.db('paymentDB')  // Replace with your actual database name
     console.log('Connected to MongoDB')
   } catch (err) {
