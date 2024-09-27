@@ -3,15 +3,16 @@ import dotenv from 'dotenv'
 import { MongoClient } from 'mongodb'
 import fetch from 'node-fetch'  
 import crypto from 'crypto'
+import cors from 'cors'
 
 dotenv.config()
 
 const app = express()
 const PORT = process.env.PORT || 3000
 
-
 // Middleware to parse incoming JSON
 app.use(express.json())
+app.use(cors())
 
 // Define POST route to create a BoxPay session
 app.post('/create-session', async (req, res) => {
@@ -66,27 +67,26 @@ app.post('/create-session', async (req, res) => {
 
 // API endpoint to receive data from main.js
 app.post('/api/store-payment-response', async (req, res) => {
+    console.log('Received a request at /api/store-payment-response')
+    console.log('Headers:', req.headers)
+    console.log('Request Body:', req.body)
 
-    console.log('Received a request at /api/store-payment-response');
-    console.log('Headers:', req.headers);
-    console.log('Request Body:', req.body);
-
-    const paymentResponse = req.body;
+    const paymentResponse = req.body
 
     if (!paymentResponse) {
-        console.error('No payment response received');
-        return res.status(400).send('No payment data received');
+        console.error('No payment response received')
+        return res.status(400).json({ error: 'No payment data received' })
     }
 
-    console.log('Received paymentResponse:', paymentResponse);
+    console.log('Received paymentResponse:', paymentResponse)
 
     // Ensure the 'x-signature' header exists
-    const receivedSignature = req.headers['x-signature'];
+    const receivedSignature = req.headers['x-signature']
     if (!receivedSignature) {
-        return res.status(403).send('Signature header missing');
+        return res.status(403).json({ error: 'Signature header missing' })
     }
 
-    const boxpaySaltKey = process.env.SALT_KEY;
+    const boxpaySaltKey = process.env.SALT_KEY
 
     // Construct the signature text as required by BoxPay's documentation
     const signatureText = [
@@ -100,35 +100,32 @@ app.post('/api/store-payment-response', async (req, res) => {
         paymentResponse.status.status,
         paymentResponse.money.currencyCode,
         paymentResponse.money.amount
-    ].join('');
+    ].join('')
 
     // Hash the signature text using SHA-256
-    const hash = crypto.createHash('sha256');
-    const calculatedSignature  = hash.update(signatureText, 'utf8').digest('hex');
-
+    const hash = crypto.createHash('sha256')
+    const calculatedSignature = hash.update(signatureText, 'utf8').digest('hex')
 
     // Verify if the signature matches
-    if (receivedSignature == calculatedSignature ) {
-          // Log the received signature and the calculated signature for debugging
-          console.log('Received Signature:', receivedSignature);
-          console.log('Calculated Signature:', calculatedSignature );
-          console.log('Payment data ', paymentResponse)
-          return res.status(200).send('Payment data and signature verified')
+    if (receivedSignature === calculatedSignature) {
+        console.log('Received Signature:', receivedSignature)
+        console.log('Calculated Signature:', calculatedSignature)
+        console.log('Payment data:', paymentResponse)
+        return res.status(200).json({ message: 'Payment data and signature verified' })
+    } else {
+        return res.status(403).json({ error: 'Invalid signature' })
     }
-    else {
-      return res.status(403).send('Invalid signature');
-    }
-});
+})
 
 app.get('/api/success', async (req, res) => {
-    console.log('Payment successfull')
-    return res.status(200).send('Payment successfull')
-});
+    console.log('Payment successful')
+    return res.status(200).json({ message: 'Payment successful' })
+})
 
 app.get('/api/failure', async (req, res) => {
     console.log('Payment failure')
-    return res.status(200).send('Payment failure')
-});
+    return res.status(200).json({ message: 'Payment failure' })
+})
 
 // Start the server
 app.listen(PORT, () => {
