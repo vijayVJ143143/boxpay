@@ -67,10 +67,15 @@ app.post('/create-session', async (req, res) => {
 // API endpoint to receive data from main.js
 app.post('/api/store-payment-response', async (req, res) => {
 
+    console.log('Received a request at /api/store-payment-response');
+    console.log('Headers:', req.headers);
+    console.log('Request Body:', req.body);
+
     const paymentResponse = req.body;
 
-    if (!paymentResponse || !paymentResponse.legalEntityCode || !paymentResponse.orderId) {
-        return res.status(400).send('Invalid payment data received');
+    if (!paymentResponse) {
+        console.error('No payment response received');
+        return res.status(400).send('No payment data received');
     }
 
     console.log('Received paymentResponse:', paymentResponse);
